@@ -2,7 +2,7 @@
   "name": "livescript-esm-loader",
   "version": "0.0.1",
   "description": "Livescript loader for node.js",
-  "main": "lib/index.js",
+  "main": "lib/loader.mjs",
   "scripts": {
     "prepublishOnly": "npm run build && npm run test",
     "test": "node --experimental-modules --loader ./lib/loader.mjs test",
