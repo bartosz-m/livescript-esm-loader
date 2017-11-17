@@ -1,0 +1,29 @@
+{
+  "name": "livescript-esm-loader",
+  "version": "0.0.1",
+  "description": "Livescript loader for node.js",
+  "main": "lib/index.js",
+  "scripts": {
+    "prepublishOnly": "npm run build && npm run test",
+    "test": "node --experimental-modules --loader ./lib/loader.mjs test",
+    "build": "node_modules/.bin/lsc dev/build",
+    "develop": "node_modules/.bin/lsc dev/watch"
+  },
+  "author": "Bartosz Matuszewski <bartosz.wojciech.matuszewski@gmail.com>",
+  "homepage": "https://gitlab.com/livescript-ide/livescript-plugins/esm-loader",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com:livescript-ide/livescript-plugins/esm-loader.git"
+  },
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "livescript": "git+https://github.com/bartosz-m/LiveScript.git#macros",
+    "source-map-support": "^0.5.0"
+  },
+  "devDependencies": {
+    "chokidar": "^1.7.0",
+    "fs-extra": "^4.0.2",
+    "livescript-transform-es-module": "0.0.6",
+    "livescript-transform-object-create": "0.0.4"
+  }
+}
