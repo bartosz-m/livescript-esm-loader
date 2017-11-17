@@ -4,6 +4,10 @@ import <[
     \./Mapper
 ]>
 import 'source-map-support'
+import \process : Process
+
+builtins = new Set do
+    Object.keys Process.binding \natives .filter (str) -> /^(?!(?:internal|node|v8)\/)/.test str
 
 RetrieveSourceMap = 
     rules: []
@@ -45,7 +49,8 @@ RetrieveSourceMap.rules.push do
                     path: source-path
                 map:
                     url: last-match.1
-                    path: path.resolve (path.basename source-path), last-match.1
+                    path: path.resolve (path.dirname source-path), last-match.1
+                    
     map: RetrieveSourceMapNode
         
     
@@ -127,31 +132,57 @@ compile = (ls-code, filepath) ->
 # create temporar directory for compilation
 tmp = fs.mkdtemp-sync path.join os.tmpdir!, 'livescript-'
 
+# tmp = path.join process.cwd!, fs.mkdtemp-sync '.livescript-tmp-'
+# console.log \TMP tmp
+
+js-to-ls = []
+
+source-path = -> if js-to-ls[it] then that else it
+      
+
 export resolve = (specifier, parent-module-URL, default-resolver ) ->>
-    ext = path.extname(specifier);
+    if js-to-ls[parent-module-URL]
+        parent-module-URL = that
+    ext = path.extname specifier
     if is-local specifier and (ext.length == 0 or ext == '.ls')
         extra-ext = if (ext == '.ls') then '' else  '.ls'
-        parent-path = path.dirname parent-module-URL.replace 'file:', ''
+        parent-path = path.dirname source-path parent-module-URL.replace 'file:', ''
         relative-to-tmp = path.resolve root, path.relative tmp,parent-path
-        resolved = (path.resolve relative-to-tmp, specifier) + extra-ext
-        if fs.exists-sync resolved
-            file = fs.read-file-sync resolved, \utf8
-            # result = livescript.compile file, filename:resolved
-            result = compile file, resolved
-            output = resolved |> (.replace /\.ls$/,'') |> (+ '.js') |> path.join tmp, _
-            map-file = output  + ".map"
-            map-link = path.basename map-file
-            result.code += "\n//# sourceMappingURL=#map-file\n"
-            fs.ensure-dir-sync path.dirname output
-            fs.write-file-sync output,result.code, \utf8
-            fs.write-file-sync map-file, (JSON.stringify result.source-map), \utf8
-            
-            url: 'file:'+output
-            format: 'esm'
+        resolved0 = path.resolve parent-path, specifier
+        try
+            stat = fs.lstat-sync resolved0
+        if stat?is-directory!
+            resolve (path.join resolved0, 'index.ls'), parent-module-URL, default-resolver
         else
-            default-resolver specifier,parent-module-URL
+            resolved = (path.resolve parent-path, specifier) + extra-ext
+            if fs.exists-sync resolved
+                file = fs.read-file-sync resolved, \utf8
+                # result = livescript.compile file, filename:resolved
+                result = compile file, resolved
+                output = resolved |> (.replace /\.ls$/,'') |> (+ '.js') |> path.join tmp, _
+                map-file = output  + ".map"
+                map-link = path.basename map-file
+                result.code += "\n//# sourceMappingURL=#map-file\n"
+                fs.ensure-dir-sync path.dirname output
+                fs.write-file-sync output,result.code, \utf8
+                fs.write-file-sync map-file, (JSON.stringify result.source-map), \utf8
+                js-to-ls[output] = resolved
+                js-to-ls['file://'+output] = "file://#{resolved}"
+                url: 'file://'+output
+                format: 'esm'
+            else
+                throw new Error "Cannot find module #{specifier} at #{resolved}"
     else
-        default-resolver specifier,parent-module-URL
+        if builtins.has specifier
+            url: specifier
+            format: \builtin
+        else
+            # if fs.exists-sync path.join specifier
+            default-resolver specifier,parent-module-URL
 
 # cleanup tmp
-# process.on \exit !-> fs-extra.remove-sync tmp
+
+process.on \exit !-> fs-extra.remove-sync tmp
+
+process.on \unhandledRejection, (reason, p) ->
+    console.log reason

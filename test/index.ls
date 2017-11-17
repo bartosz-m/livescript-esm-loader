@@ -1,4 +1,5 @@
 import <[ assert ]>
+import \livescript
 import all './foo.ls'
 import all './Vector'
 
@@ -13,4 +14,4 @@ export default ->
         assert false
     catch
         # checking if sourcemaps work
-        e.stack.split '\n' .1.match /index\.ls\:13:9/ |> assert
+        e.stack.split '\n' .1.match /index\.ls\:14:9/ |> assert
