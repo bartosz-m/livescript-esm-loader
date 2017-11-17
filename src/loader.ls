@@ -1,5 +1,5 @@
 import <[
-    url fs os path process livescript livescript-transform-es-module
+    url fs os path process livescript livescript-transform-esm
     fs-extra
     \./Mapper
 ]>

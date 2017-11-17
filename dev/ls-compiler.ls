@@ -4,7 +4,7 @@ require! {
     \fs-extra : fs
     \livescript : livescript
     \livescript-transform-object-create
-    \livescript-transform-es-module
+    \livescript-transform-esm
     # \../src
 }
 
