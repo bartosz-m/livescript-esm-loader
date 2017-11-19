@@ -1,10 +1,18 @@
 import <[
-    url fs os path process livescript livescript-transform-esm
-    fs-extra
+    url fs os path process
+    fs-extra livescript livescript-transform-esm source-map-support
     \./Mapper
 ]>
-import 'source-map-support'
 import \process : Process
+
+
+loader-dependencies = 
+    \livescript : livescript
+    \fs-extra : fs-extra
+    \source-map-support : source-map-support
+
+process.on \unhandledRejection, (reason, p) ->
+    console.log reason
 
 builtins = new Set do
     Object.keys Process.binding \natives .filter (str) -> /^(?!(?:internal|node|v8)\/)/.test str
@@ -138,13 +146,12 @@ tmp = fs.mkdtemp-sync path.join os.tmpdir!, 'livescript-'
 js-to-ls = []
 
 source-path = -> if js-to-ls[it] then that else it
-      
 
-export resolve = (specifier, parent-module-URL, default-resolver ) ->>
-    if js-to-ls[parent-module-URL]
-        parent-module-URL = that
+# TODO add default loading of cmj
+
+resolve-local = (specifier, parent-module-URL, default-resolver) ->>
     ext = path.extname specifier
-    if is-local specifier and (ext.length == 0 or ext == '.ls')
+    if ext.length == 0 or ext == '.ls'
         extra-ext = if (ext == '.ls') then '' else  '.ls'
         parent-path = path.dirname source-path parent-module-URL.replace 'file:', ''
         relative-to-tmp = path.resolve root, path.relative tmp,parent-path
@@ -152,37 +159,78 @@ export resolve = (specifier, parent-module-URL, default-resolver ) ->>
         try
             stat = fs.lstat-sync resolved0
         if stat?is-directory!
-            resolve (path.join resolved0, 'index.ls'), parent-module-URL, default-resolver
+            resolve-local (path.join resolved0, 'index'), parent-module-URL, default-resolver
         else
-            resolved = (path.resolve parent-path, specifier) + extra-ext
-            if fs.exists-sync resolved
-                file = fs.read-file-sync resolved, \utf8
-                # result = livescript.compile file, filename:resolved
-                result = compile file, resolved
-                output = resolved |> (.replace /\.ls$/,'') |> (+ '.js') |> path.join tmp, _
-                map-file = output  + ".map"
-                map-link = path.basename map-file
-                result.code += "\n//# sourceMappingURL=#map-file\n"
-                fs.ensure-dir-sync path.dirname output
-                fs.write-file-sync output,result.code, \utf8
-                fs.write-file-sync map-file, (JSON.stringify result.source-map), \utf8
-                js-to-ls[output] = resolved
-                js-to-ls['file://'+output] = "file://#{resolved}"
-                url: 'file://'+output
-                format: 'esm'
+            if fs.exists-sync (js-file = resolved0 + '.js')
+                default-resolver js-file, parent-module-URL
             else
-                throw new Error "Cannot find module #{specifier} at #{resolved}"
+                resolved = (path.resolve parent-path, specifier) + extra-ext
+                if fs.exists-sync resolved
+                    file = fs.read-file-sync resolved, \utf8
+                    # result = livescript.compile file, filename:resolved
+                    result = compile file, resolved
+                    output = resolved |> (.replace /\.ls$/,'') |> (+ '.js') |> path.join tmp, _
+                    map-file = output  + ".map"
+                    map-link = path.basename map-file
+                    result.code += "\n//# sourceMappingURL=#map-file\n"
+                    fs.ensure-dir-sync path.dirname output
+                    fs.write-file-sync output,result.code, \utf8
+                    fs.write-file-sync map-file, (JSON.stringify result.source-map), \utf8
+                    js-to-ls[output] = resolved
+                    js-to-ls['file://'+output] = "file://#{resolved}"
+                    url: 'file://'+output
+                    format: 'esm'
+                else
+                    throw new Error "Cannot find module #{specifier} at #{resolved}"
     else
-        if builtins.has specifier
-            url: specifier
-            format: \builtin
-        else
-            # if fs.exists-sync path.join specifier
-            default-resolver specifier,parent-module-URL
+        default-resolver specifier, parent-module-URL
+
+
+
+export resolve = (specifier, parent-module-URL, default-resolver ) ->>
+    # node cannot retur module used by loader so we need to do it oureselves
+    if loader-dependencies[specifier]
+        result = 
+            url: 'loaded://' + specifier
+            format: \dynamic
+        return result
+        
+    if js-to-ls[parent-module-URL]
+        parent-module-URL = that
+    ext = path.extname specifier
+    if ext == '.js'
+        console.log \default ext, specifier
+        default-resolver specifier,parent-module-URL
+    else if is-local specifier
+        resolve-local specifier, parent-module-URL, default-resolver 
+    else
+        default-resolver specifier,parent-module-URL
+        # if builtins.has specifier
+        #     url: specifier
+        #     format: \builtin
+        # else
+        #     default-resolver specifier,parent-module-URL
+            # try
+            #     resolved = node-resolve.sync specifier, basedir: parent-path 
+            #     console.log \node-resolve specifier, resolved
+            #     url: "file://" + resolved
+            #     format: \dynamic
+            # # if fs.exists-sync path.join specifier
+            # catch
+            #     console.log \error-default specifier
+            #     default-resolver specifier,parent-module-URL
+
+
+export dynamic-instantiate = (url) ->
+    unless url.match /^loaded/
+        throw new Error "Unsupported protocol"
+    exports: ['default'],
+    execute: (exports) ->
+        specifier = url.replace 'loaded://', ''
+        exports.default.set loader-dependencies[specifier]
+
+
 
 # cleanup tmp
 
 process.on \exit !-> fs-extra.remove-sync tmp
-
-process.on \unhandledRejection, (reason, p) ->
-    console.log reason

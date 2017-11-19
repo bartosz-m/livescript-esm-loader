@@ -1,10 +1,13 @@
 import <[ assert ]>
 import \livescript
+import \./cjs
 import all './foo.ls'
 import all './Vector'
 
+
 export default ->
-    assert true
+    assert.deep-equal cjs, name: "CommonJS Module"
+    assert livescript, 'loading cjs module with defined main entry'
     # imported from './foo.ls'
     assert Foo, \Foo
     assert Bar, \Bar
@@ -14,4 +17,4 @@ export default ->
         assert false
     catch
         # checking if sourcemaps work
-        e.stack.split '\n' .1.match /index\.ls\:14:9/ |> assert
+        e.stack.split '\n' .1.match /index\.ls\:17:9/ |> assert
