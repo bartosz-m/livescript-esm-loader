@@ -26,8 +26,10 @@ compiler = Compiler.create {livescript}
 transform-esm.install compiler
 
 loader-dependencies =
-    \livescript-transform-esm : transform-esm
+    \\livescript-transform-esm/lib/plugin : transform-esm
+    \livescript-transform-esm/lib/livescript/Compiler : Compiler
     \livescript : livescript
+    \livescript/lib/lexer : lexer
     \fs-extra : fs-extra
     \source-map-support : source-map-support
 
