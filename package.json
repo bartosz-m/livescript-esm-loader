@@ -1,6 +1,6 @@
 {
   "name": "livescript-esm-loader",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Livescript loader for node.js",
   "main": "lib/loader.mjs",
   "scripts": {
