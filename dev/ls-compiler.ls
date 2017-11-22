@@ -3,10 +3,16 @@ require! {
     \chokidar
     \fs-extra : fs
     \livescript : livescript
+    \livescript/lib/lexer : livescript-lexer
     \livescript-transform-object-create
-    \livescript-transform-esm
+    \livescript-transform-esm/lib/plugin : transform-esm
+    \livescript-transform-esm/lib/livescript/Compiler : Compiler
     # \../src
 }
+
+livescript.lexer = livescript-lexer
+ls-compiler = Compiler.create {livescript}
+transform-esm.install ls-compiler
 
 absolute-path = -> path.normalize path.join __dirname, it
 
@@ -49,7 +55,8 @@ compile = (filepath) !->>
             relative-filename: path.join \../src relative-path
             output-filename: relative-path.replace /.ls$/ '.js'
         console.log "compiling #relative-path"
-        js-result = ls-ast ls-code, options <<< default-options
+        # js-result = ls-ast ls-code, options <<< default-options
+        js-result = ls-compiler.compile ls-code, options <<< default-options
         ext = if js-result.ast.exports?length or js-result.ast.imports?length
         then '.mjs'
         else '.js'

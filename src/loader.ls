@@ -1,12 +1,32 @@
 import <[
-    url fs os path process
-    fs-extra livescript livescript-transform-esm source-map-support
+    assert url fs os path process
+    fs-extra livescript source-map-support
     \./Mapper
 ]>
+import \livescript-transform-esm/lib/plugin : transform-esm
+import \livescript-transform-esm/lib/livescript/Compiler
+import \livescript/lib/lexer
 import \process : Process
 
+livescript.lexer = lexer
 
-loader-dependencies = 
+copy = (something) ->
+    type = typeof! something
+    if type == \Function
+        result = -> something ...
+        result.prototype = ^^something.prototype
+        result
+    else if type == \Object
+        ^^something
+    else
+        something
+
+compiler = Compiler.create {livescript}
+
+transform-esm.install compiler
+
+loader-dependencies =
+    \livescript-transform-esm : transform-esm
     \livescript : livescript
     \fs-extra : fs-extra
     \source-map-support : source-map-support
@@ -117,7 +137,7 @@ default-options =
     header: false
 
 ls-ast = (code, options = {}) ->
-      ast = livescript.ast code
+      ast = livescript-copy.ast code
       output = ast.compile-root options
       output.set-file options.filename
       result = output.to-string-with-source-map!
@@ -126,7 +146,8 @@ ls-ast = (code, options = {}) ->
 compile = (ls-code, filepath) ->
     options =
         filename: filepath
-    js-result = ls-ast ls-code, options <<< default-options
+    # js-result = ls-ast ls-code, options <<< default-options
+    js-result = compiler.compile ls-code, options <<< default-options
     ext = if js-result.ast.exports?length or js-result.ast.imports?length
     then '.mjs'
     else '.js'
