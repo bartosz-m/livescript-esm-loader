@@ -26,6 +26,6 @@
     "fs-extra": "^4.0.2",
     "livescript-transform-es-module": "0.0.6",
     "livescript-transform-object-create": "0.0.4",
-    "livescript-esm-loader": "0.0.7"
+    "livescript-esm-loader": "0.0.9"
   }
 }
