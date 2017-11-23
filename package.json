@@ -5,7 +5,7 @@
   "main": "lib/loader.mjs",
   "scripts": {
     "prepublishOnly": "npm run build && npm run test",
-    "test": "node --experimental-modules --loader livescript-esm-loader test/index",
+    "test": "node --experimental-modules --loader ./lib/loader.mjs test/index",
     "build": "node_modules/.bin/lsc dev/build",
     "develop": "node_modules/.bin/lsc dev/watch"
   },
@@ -18,14 +18,13 @@
   "license": "BSD-3-Clause",
   "dependencies": {
     "livescript": "git+https://github.com/bartosz-m/LiveScript.git#macros",
-    "livescript-transform-esm": "^2.0.9",
+    "livescript-transform-esm": "^2.0.13",
     "source-map-support": "^0.5.0"
   },
   "devDependencies": {
     "chokidar": "^1.7.0",
     "fs-extra": "^4.0.2",
     "livescript-transform-es-module": "0.0.6",
-    "livescript-transform-object-create": "0.0.4",
-    "livescript-esm-loader": "0.0.9"
+    "livescript-transform-object-create": "0.0.4"
   }
 }
