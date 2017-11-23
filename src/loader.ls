@@ -1,12 +1,14 @@
 import <[
     assert url fs os path process
-    fs-extra livescript source-map-support
+    fs-extra source-map-support
+    livescript
     \./Mapper
 ]>
 import \livescript-transform-esm/lib/plugin : transform-esm
 import \livescript-transform-esm/lib/livescript/Compiler
 import \livescript/lib/lexer
 import \process : Process
+import \source-map
 
 livescript.lexer = lexer
 
@@ -32,6 +34,9 @@ loader-dependencies =
     \livescript/lib/lexer : lexer
     \fs-extra : fs-extra
     \source-map-support : source-map-support
+    \source-map : source-map
+
+
 
 process.on \unhandledRejection, (reason, p) ->
     console.log reason
