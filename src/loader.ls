@@ -5,7 +5,7 @@ import <[
     \./Mapper
 ]>
 import \livescript-transform-esm/lib/plugin : transform-esm
-import \livescript-transform-esm/lib/livescript/Compiler
+import \livescript-compiler/lib/livescript/Compiler
 import \livescript/lib/lexer
 import \process : Process
 import \source-map

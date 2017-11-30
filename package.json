@@ -18,7 +18,8 @@
   "license": "BSD-3-Clause",
   "dependencies": {
     "livescript": "git+https://github.com/bartosz-m/LiveScript.git#macros",
-    "livescript-transform-esm": "^2.0.17",
+    "livescript-compiler": "0.0.10",
+    "livescript-transform-esm": "^2.7.0",
     "source-map-support": "^0.5.0"
   },
   "devDependencies": {

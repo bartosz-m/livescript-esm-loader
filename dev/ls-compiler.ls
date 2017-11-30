@@ -6,7 +6,7 @@ require! {
     \livescript/lib/lexer : livescript-lexer
     \livescript-transform-object-create
     \livescript-transform-esm/lib/plugin : transform-esm
-    \livescript-transform-esm/lib/livescript/Compiler : Compiler
+    \livescript-compiler/lib/livescript/Compiler : Compiler
     # \../src
 }
 
