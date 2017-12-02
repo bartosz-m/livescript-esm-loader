@@ -153,21 +153,20 @@ ls-ast = (code, options = {}) ->
 compile = (ls-code, filepath) ->
     options =
         filename: filepath
-    # js-result = ls-ast ls-code, options <<< default-options
     js-result = compiler.compile ls-code, options <<< default-options
     ext = if js-result.ast.exports?length or js-result.ast.imports?length
     then '.mjs'
     else '.js'
     js-result
         ..map-file = filepath.replace /\.ls$/ "#{ext}.map'"
-        ..source-map = ..map.to-JSON!        
-    # fs.output-file output, js-result.code
-    # fs.output-file map-file, JSON.stringify js-result.map.to-JSON!
+        ..source-map = ..map.to-JSON!
     
 
 # create temporar directory for compilation
 tmp = fs.mkdtemp-sync path.join os.tmpdir!, 'livescript-'
 
+# cleanup tmp
+process.on \exit !-> fs-extra.remove-sync tmp
 # tmp = path.join process.cwd!, fs.mkdtemp-sync '.livescript-tmp-'
 # console.log \TMP tmp
 
@@ -197,10 +196,11 @@ resolve-local = (specifier, parent-module-URL, default-resolver) ->>
                     file = fs.read-file-sync resolved, \utf8
                     # result = livescript.compile file, filename:resolved
                     result = compile file, resolved
-                    output = resolved |> (.replace /\.ls$/,'') |> (+ '.js') |> path.join tmp, _
+                    output = resolved |> (.replace /\.ls$/,'') |> (+ '.mjs') |> path.join tmp, _
                     map-file = output  + ".map"
                     map-link = path.basename map-file
                     result.code += "\n//# sourceMappingURL=#map-file\n"
+                    # console.log result.map
                     fs.ensure-dir-sync path.dirname output
                     fs.write-file-sync output,result.code, \utf8
                     fs.write-file-sync map-file, (JSON.stringify result.source-map), \utf8
@@ -227,26 +227,11 @@ export resolve = (specifier, parent-module-URL, default-resolver ) ->>
         parent-module-URL = that
     ext = path.extname specifier
     if ext == '.js'
-        console.log \default ext, specifier
         default-resolver specifier,parent-module-URL
     else if is-local specifier
         resolve-local specifier, parent-module-URL, default-resolver 
     else
         default-resolver specifier,parent-module-URL
-        # if builtins.has specifier
-        #     url: specifier
-        #     format: \builtin
-        # else
-        #     default-resolver specifier,parent-module-URL
-            # try
-            #     resolved = node-resolve.sync specifier, basedir: parent-path 
-            #     console.log \node-resolve specifier, resolved
-            #     url: "file://" + resolved
-            #     format: \dynamic
-            # # if fs.exists-sync path.join specifier
-            # catch
-            #     console.log \error-default specifier
-            #     default-resolver specifier,parent-module-URL
 
 
 export dynamic-instantiate = (url) ->
@@ -256,9 +241,3 @@ export dynamic-instantiate = (url) ->
     execute: (exports) ->
         specifier = url.replace 'loaded://', ''
         exports.default.set loader-dependencies[specifier]
-
-
-
-# cleanup tmp
-
-process.on \exit !-> fs-extra.remove-sync tmp
