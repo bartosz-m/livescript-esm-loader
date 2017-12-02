@@ -20,11 +20,11 @@
     "livescript": "git+https://github.com/bartosz-m/LiveScript.git#macros",
     "livescript-compiler": "0.0.10",
     "livescript-transform-esm": "^2.7.0",
+    "fs-extra": "^4.0.2",
     "source-map-support": "^0.5.0"
   },
   "devDependencies": {
-    "chokidar": "^1.7.0",
-    "fs-extra": "^4.0.2",
+    "chokidar": "^1.7.0",    
     "livescript-transform-es-module": "0.0.6",
     "livescript-transform-object-create": "0.0.4"
   }
